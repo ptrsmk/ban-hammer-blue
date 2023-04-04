@@ -1,24 +1,24 @@
 <?php
 /*
-Plugin Name: Ban Hammer
-Plugin URI: http://halfelf.org/plugins/ban-hammer/
+Plugin Name: Ban Hammer Blue
+Plugin URI: https://github.com/ptrsmk/ban-hammer-blue/
 Description: Prevent people from registering with any email you list.
-Version: 3.1.2
-Author: Mika Epstein
-Author URI: http://halfelf.org/
+Version: 1.0.0
+Author: David Rummelhoff
+Author URI: https://github.com/ptrsmk/ban-hammer-blue/
 Network: true
-Text Domain: ban-hammer
+Text Domain: ban-hammer-blue
 
-Copyright 2009-23 Mika Epstein (email: ipstenu@halfelf.org)
+Copyright 2023 David Rummelhoff
 
-	This file is part of Ban Hammer, a plugin for WordPress.
+	This file is part of Ban Hammer Blue, a plugin for WordPress.
 
-	Ban Hammer is free software: you can redistribute it and/or modify
+	Ban Hammer Blue is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 2 of the License, or
 	(at your option) any later version.
 
-	Ban Hammer is distributed in the hope that it will be useful,
+	Ban Hammer Blue is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
@@ -28,7 +28,7 @@ Copyright 2009-23 Mika Epstein (email: ipstenu@halfelf.org)
 
 */
 
-class BanHammer {
+class BanHammerBlue {
 
 	/*
 	 * Starter defines and vars for use later
@@ -37,7 +37,7 @@ class BanHammer {
 	 */
 
 	// Holds option data.
-	public $option_name = 'banhammer_options';
+	public $option_name = 'banhammer_blue_options';
 	public $option_defaults;
 
 	// Instance
@@ -69,7 +69,7 @@ class BanHammer {
 		$this->option_defaults = array(
 			'redirect'     => 'no',
 			'redirect_url' => 'https://example.com',
-			'message'      => __( '<strong>ERROR</strong>: Your email has been banned from registration.', 'ban-hammer' ),
+			'message'      => __( '<strong>ERROR</strong>: Your email has been banned from registration.', 'ban-hammer-blue' ),
 		);
 	}
 
@@ -105,7 +105,7 @@ class BanHammer {
 		}
 
 		// The magic sauce
-		add_action( 'register_post', array( &$this, 'banhammer_drop' ), 1, 3 );
+		add_action( 'register_post', array( &$this, 'banhammer_blue_drop' ), 1, 3 );
 	}
 
 	public function get_options() {
@@ -124,7 +124,7 @@ class BanHammer {
 	 */
 	public function get_keylist() {
 		if ( is_multisite() ) {
-			$keylist = get_site_option( 'banhammer_keys', 'spammer@example.com', false );
+			$keylist = get_site_option( 'banhammer_blue_keys', 'spammer@example.com', false );
 		} else {
 			$keylist = get_option( 'disallowed_keys' );
 		}
@@ -140,7 +140,7 @@ class BanHammer {
 	 */
 	public function buddypress_signup( $result ) {
 		$options = $this->get_options();
-		if ( $this->banhammer_drop( $result['user_name'], $result['user_email'], $result['errors'] ) ) {
+		if ( $this->banhammer_blue_drop( $result['user_name'], $result['user_email'], $result['errors'] ) ) {
 			$result['errors']->add( 'user_email', $options['message'] );
 		}
 		return $result;
@@ -164,7 +164,7 @@ class BanHammer {
 	 * @access public
 	 */
 	public function admin_menu() {
-		add_management_page( __( 'Ban Hammer', 'ban-hammer' ), __( 'Ban Hammer', 'ban-hammer' ), 'moderate_comments', 'ban-hammer', array( &$this, 'options' ) );
+		add_management_page( __( 'Ban Hammer Blue', 'ban-hammer-blue' ), __( 'Ban Hammer Blue', 'ban-hammer-blue' ), 'moderate_comments', 'ban-hammer-blue', array( &$this, 'options' ) );
 	}
 
 	/**
@@ -174,7 +174,7 @@ class BanHammer {
 	 * @access public
 	 */
 	public function network_admin_menu() {
-		add_submenu_page( 'settings.php', __( 'Ban Hammer', 'ban-hammer' ), __( 'Ban Hammer', 'ban-hammer' ), 'manage_networks', 'ban-hammer', array( &$this, 'options' ) );
+		add_submenu_page( 'settings.php', __( 'Ban Hammer Blue', 'ban-hammer-blue' ), __( 'Ban Hammer Blue', 'ban-hammer-blue' ), 'manage_networks', 'ban-hammer-blue', array( &$this, 'options' ) );
 	}
 
 	/**
@@ -184,9 +184,9 @@ class BanHammer {
 	 */
 	public function network_admin_screen() {
 		$current_screen = get_current_screen();
-		if ( 'settings_page_ban-hammer-network' === $current_screen->id ) {
+		if ( 'settings_page_ban-hammer-blue-network' === $current_screen->id ) {
 
-			if ( isset( $_POST['update'] ) && check_admin_referer( 'banhammer_networksave' ) ) {
+			if ( isset( $_POST['update'] ) && check_admin_referer( 'banhammer_blue_networksave' ) ) {
 				$options = $this->get_options();
 				$keylist = $this->get_keylist();
 
@@ -199,13 +199,13 @@ class BanHammer {
 
 				// Banned List.
 				if ( empty( $_POST['bannedlist'] ) ) {
-					update_site_option( 'banhammer_keys', '' );
+					update_site_option( 'banhammer_blue_keys', '' );
 				} elseif ( $_POST['bannedlist'] !== $keylist ) {
 					$new_bannedlist = array_map( 'sanitize_text_field', explode( "\n", $_POST['bannedlist'] ) );
 					$new_bannedlist = array_filter( array_map( 'trim', $new_bannedlist ) );
 					$new_bannedlist = array_unique( $new_bannedlist );
 					$new_bannedlist = implode( "\n", $new_bannedlist );
-					update_site_option( 'banhammer_keys', $new_bannedlist );
+					update_site_option( 'banhammer_blue_keys', $new_bannedlist );
 				}
 				unset( $_POST['bannedlist'] );
 
@@ -213,7 +213,7 @@ class BanHammer {
 				update_site_option( $this->option_name, $output );
 
 				?>
-				<div class="notice notice-success is-dismissible"><p><strong><?php esc_html_e( 'Options Updated!', 'ban-hammer' ); ?></strong></p></div>
+				<div class="notice notice-success is-dismissible"><p><strong><?php esc_html_e( 'Options Updated!', 'ban-hammer-blue' ); ?></strong></p></div>
 				<?php
 			}
 		}
@@ -225,25 +225,25 @@ class BanHammer {
 	 * @since 2.6
 	 */
 	public function register_settings() {
-		register_setting( 'ban-hammer', 'banhammer_options', array( &$this, 'banhammer_sanitize' ) );
+		register_setting( 'ban-hammer-blue', 'banhammer_blue_options', array( &$this, 'banhammer_blue_sanitize' ) );
 
 		// The main section
-		add_settings_section( 'banhammer-settings', '', array( &$this, 'banhammer_settings_callback' ), 'ban-hammer-settings' );
+		add_settings_section( 'banhammer-blue-settings', '', array( &$this, 'banhammer_blue_settings_callback' ), 'ban-hammer-blue-settings' );
 
 		// The Fields
-		add_settings_field( 'message', __( 'Blocked Message', 'ban-hammer' ), array( &$this, 'message_callback' ), 'ban-hammer-settings', 'banhammer-settings' );
-		add_settings_field( 'redirect', __( 'Redirect Blocked Users?', 'ban-hammer' ), array( &$this, 'redirect_callback' ), 'ban-hammer-settings', 'banhammer-settings' );
-		add_settings_field( 'bannedlist', __( 'The Blocked List', 'ban-hammer' ), array( &$this, 'bannedlist_callback' ), 'ban-hammer-settings', 'banhammer-settings' );
+		add_settings_field( 'message', __( 'Blocked Message', 'ban-hammer-blue' ), array( &$this, 'message_callback' ), 'ban-hammer-blue-settings', 'banhammer-blue-settings' );
+		add_settings_field( 'redirect', __( 'Redirect Blocked Users?', 'ban-hammer-blue' ), array( &$this, 'redirect_callback' ), 'ban-hammer-blue-settings', 'banhammer-blue-settings' );
+		add_settings_field( 'bannedlist', __( 'The Blocked List', 'ban-hammer-blue' ), array( &$this, 'bannedlist_callback' ), 'ban-hammer-blue-settings', 'banhammer-blue-settings' );
 	}
 
 	/**
-	 * Ban Hammer Settings Callback
+	 * Ban Hammer Blue Settings Callback
 	 *
 	 * @since 2.6
 	 */
-	public function banhammer_settings_callback() {
+	public function banhammer_blue_settings_callback() {
 		?>
-		<p><?php esc_html_e( 'Customize your Ban Hammer experience via the settings below.', 'ban-hammer' ); ?></p>
+		<p><?php esc_html_e( 'Customize your Ban Hammer Blue experience via the settings below.', 'ban-hammer-blue' ); ?></p>
 		<?php
 	}
 
@@ -255,8 +255,8 @@ class BanHammer {
 	public function bannedlist_callback() {
 		$keylist = $this->get_keylist();
 		?>
-		<p><?php esc_html_e( 'The terms below will not be allowed to be used during registration. You can add in full emails (i.e. foo@example.com) or domains (i.e. @domain.com), and partials (i.e. viagra). Wildcards (i.e. *) will not work.', 'ban-hammer' ); ?></p>
-		<p><textarea name="banhammer_options[bannedlist]" id="banhammer_options[bannedlist]" cols="40" rows="15"><?php echo esc_textarea( $keylist ); ?></textarea></p>
+		<p><?php esc_html_e( 'The terms below will not be allowed to be used during registration. You can add in full emails (i.e. foo@example.com) or domains (i.e. @domain.com), and partials (i.e. viagra). Wildcards (i.e. *) will not work.', 'ban-hammer-blue' ); ?></p>
+		<p><textarea name="banhammer_blue_options[bannedlist]" id="banhammer_blue_options[bannedlist]" cols="40" rows="15"><?php echo esc_textarea( $keylist ); ?></textarea></p>
 		<?php
 	}
 
@@ -268,8 +268,8 @@ class BanHammer {
 	public function message_callback() {
 		$options = $this->get_options();
 		?>
-		<p><?php esc_html_e( 'The message below is displayed to users who are not allowed to register on your blog. Edit is as you see fit, but remember you don\'t get a lot of space so keep it simple.', 'ban-hammer' ); ?></p>
-		<p><textarea name="banhammer_options[message]" id="banhammer_options[message]" cols="80" rows="2"><?php echo esc_html( $options['message'] ); ?></textarea></p>
+		<p><?php esc_html_e( 'The message below is displayed to users who are not allowed to register on your blog. Edit is as you see fit, but remember you don\'t get a lot of space so keep it simple.', 'ban-hammer-blue' ); ?></p>
+		<p><textarea name="banhammer_blue_options[message]" id="banhammer_blue_options[message]" cols="80" rows="2"><?php echo esc_html( $options['message'] ); ?></textarea></p>
 		<?php
 	}
 
@@ -281,15 +281,15 @@ class BanHammer {
 	public function redirect_callback() {
 		$options = $this->get_options();
 		?>
-		<p><?php esc_html_e( 'If you\'d rather redirect users to a custom URL, please check the box below. If you do, the message above will not show.', 'ban-hammer' ); ?></p>
-		<p><input type="checkbox" id="banhammer_options[redirect]" name="banhammer_options[redirect]" value="yes" <?php checked( $options['redirect'], 'yes', true ); ?> <?php checked( $options['redirect'], '1', true ); ?> >
-		<label for="banhammer_options[redirect]"><?php esc_html_e( 'Redirect failed logins to a custom URL.', 'ban-hammer' ); ?></label></p>
+		<p><?php esc_html_e( 'If you\'d rather redirect users to a custom URL, please check the box below. If you do, the message above will not show.', 'ban-hammer-blue' ); ?></p>
+		<p><input type="checkbox" id="banhammer_blue_options[redirect]" name="banhammer_blue_options[redirect]" value="yes" <?php checked( $options['redirect'], 'yes', true ); ?> <?php checked( $options['redirect'], '1', true ); ?> >
+		<label for="banhammer_blue_options[redirect]"><?php esc_html_e( 'Redirect failed logins to a custom URL.', 'ban-hammer-blue' ); ?></label></p>
 
 		<?php
 		if ( isset( $options['redirect'] ) && 'no' !== $options['redirect'] && ! empty( $options['redirect'] ) ) {
 			?>
-			<p><textarea name="banhammer_options[redirect_url]" id="banhammer_options[redirect_url]" cols="60" rows="1"><?php echo esc_url( $options['redirect_url'] ); ?></textarea>
-			<br /><span class="description"><?php esc_html_e( 'Set redirect URL (example: http://example.com).', 'ban-hammer' ); ?></span></p>
+			<p><textarea name="banhammer_blue_options[redirect_url]" id="banhammer_blue_options[redirect_url]" cols="60" rows="1"><?php echo esc_url( $options['redirect_url'] ); ?></textarea>
+			<br /><span class="description"><?php esc_html_e( 'Set redirect URL (example: http://example.com).', 'ban-hammer-blue' ); ?></span></p>
 			<?php
 		}
 	}
@@ -306,7 +306,7 @@ class BanHammer {
 		?>
 		<div class="wrap">
 
-		<h1><?php esc_html_e( 'Ban Hammer', 'ban-hammer' ); ?></h1>
+		<h1><?php esc_html_e( 'Ban Hammer Blue', 'ban-hammer-blue' ); ?></h1>
 
 		<?php
 		settings_errors();
@@ -315,14 +315,14 @@ class BanHammer {
 			?>
 			<form method="post" width='1'>
 			<?php
-			wp_nonce_field( 'banhammer_networksave' );
+			wp_nonce_field( 'banhammer_blue_networksave' );
 		} else {
 			?>
 			<form action="options.php" method="POST" >
 			<?php
-			settings_fields( 'ban-hammer' );
+			settings_fields( 'ban-hammer-blue' );
 		}
-				do_settings_sections( 'ban-hammer-settings' );
+				do_settings_sections( 'ban-hammer-blue-settings' );
 				submit_button( '', 'primary', 'update' );
 		?>
 			</form>
@@ -336,7 +336,7 @@ class BanHammer {
 	 * @return array        Sanitized data
 	 * @since  2.6
 	 */
-	public function banhammer_sanitize( $input ) {
+	public function banhammer_blue_sanitize( $input ) {
 		// Get current options
 		$options = $this->get_options();
 		$keylist = $this->get_keylist();
@@ -348,7 +348,7 @@ class BanHammer {
 		$output['redirect']     = ( ! isset( $input['redirect'] ) || is_null( $input['redirect'] ) || '0' === $input['redirect'] ) ? 'no' : 'yes';
 		$output['redirect_url'] = ( isset( $input['redirect_url'] ) && $input['redirect_url'] !== $options['redirect_url'] ) ? sanitize_url( $input['redirect_url'] ) : $options['redirect_url'];
 
-		// Banned List (not saved in the Ban Hammer options)
+		// Banned List (not saved in the Ban Hammer Blue options)
 		if ( empty( $input['bannedlist'] ) ) {
 			update_option( 'disallowed_keys', '' );
 		} elseif ( $input['bannedlist'] !== $keylist ) {
@@ -366,14 +366,14 @@ class BanHammer {
 	}
 
 	/**
-	 * Ban Hammer
+	 * Ban Hammer Blue
 	 *
 	 * Here's the basic plugin for WordPress SANS BuddyPress
 	 *
 	 * @since 1.0
 	 * @access public
 	 */
-	public function banhammer_drop( $user_login, $user_email, $errors ) {
+	public function banhammer_blue_drop( $user_login, $user_email, $errors ) {
 		$options           = $this->get_options();
 		$bannedlist_string = $this->get_keylist();
 		$bannedlist_array  = explode( "\n", $bannedlist_string );
@@ -403,7 +403,7 @@ class BanHammer {
 	 * @access public
 	 */
 	public function wpmu_validation( $result ) {
-		if ( $this->banhammer_drop( sanitize_user( $_POST['user_name'] ), sanitize_email( $_POST['user_email'] ), $result['errors'] ) ) {
+		if ( $this->banhammer_blue_drop( sanitize_user( $_POST['user_name'] ), sanitize_email( $_POST['user_email'] ), $result['errors'] ) ) {
 			$result['errors']->add( 'user_email', $output['message'] );
 		}
 		return $result;
@@ -421,17 +421,17 @@ class BanHammer {
 
 			// Determine settings links based on Multisite or not...
 			if ( is_multisite() ) {
-				$settings_url = network_admin_url( 'settings.php?page=ban-hammer' );
+				$settings_url = network_admin_url( 'settings.php?page=ban-hammer-blue' );
 			} else {
-				$settings_url = admin_url( 'tools.php?page=ban-hammer' );
+				$settings_url = admin_url( 'tools.php?page=ban-hammer-blue' );
 			}
 
 			// Settings Link:
-			$settings = '<a href="' . $settings_url . '">' . __( 'Settings', 'ban-hammer' ) . '</a>';
+			$settings = '<a href="' . $settings_url . '">' . __( 'Settings', 'ban-hammer-blue' ) . '</a>';
 			$links[]  = $settings;
 
 			// Donation Link:
-			$donate  = '<a href="https://ko-fi.com/A236CEN/">' . __( 'Donate', 'ban-hammer' ) . '</a>';
+			$donate  = '<a href="https://ko-fi.com/A236CEN/">' . __( 'Donate', 'ban-hammer-blue' ) . '</a>';
 			$links[] = $donate;
 		}
 
@@ -440,4 +440,4 @@ class BanHammer {
 
 }
 
-new BanHammer();
+new BanHammerBlue();
