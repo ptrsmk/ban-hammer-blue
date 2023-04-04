@@ -11,6 +11,6 @@ if ( ! defined( 'ABSPATH' ) && ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit();
 }
 
-delete_site_option( 'banhammer_message' );
-delete_site_option( 'banhammer_options' );
-delete_site_option( 'banhammer_keys' );
+delete_site_option( 'banhammer_blue_message' );
+delete_site_option( 'banhammer_blue_options' );
+delete_site_option( 'banhammer_blue_keys' );
