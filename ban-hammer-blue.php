@@ -3,7 +3,7 @@
 Plugin Name: Ban Hammer Blue
 Plugin URI: https://github.com/ptrsmk/ban-hammer-blue/
 Description: Prevent people from registering with any email you list.
-Version: 1.0.0
+Version: 1.0.1
 Author: David Rummelhoff
 Author URI: https://github.com/ptrsmk/ban-hammer-blue/
 Network: true
@@ -295,6 +295,19 @@ class BanHammerBlue {
 			<br /><span class="description"><?php esc_html_e( 'Set redirect URL (example: http://example.com).', 'ban-hammer-blue' ); ?></span></p>
 			<?php
 		}
+	}
+	
+	/**
+	 * Burner List Callback
+	 *
+	 * @since 1.0
+	 */
+	public function burner_list_callback() {
+		$options = $this->get_options();
+		?>
+		<p><?php esc_html_e( 'If you\'d to utilize the burner email list from wesbos, please check the box below.', 'ban-hammer-blue' ); ?></p>
+		<p><input type="checkbox" id="banhammer_blue_options[burner_list]" name="banhammer_blue_options[burner_list]" value="yes" <?php checked( $options['burner_list'], 'yes', true ); ?> <?php checked( $options['burner_list'], '1', true ); ?> >
+		<label for="banhammer_blue_options[burner_list]"><?php esc_html_e( 'Utilize the wesbos burner email list.', 'ban-hammer-blue' ); ?></label></p>
 	}
 
 	/**
