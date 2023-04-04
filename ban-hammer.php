@@ -12,6 +12,9 @@ Text Domain: ban-hammer-blue
 Copyright 2023 David Rummelhoff
 
 	This file is part of Ban Hammer Blue, a plugin for WordPress.
+	
+	This plugin is a fork of the Ban Hammer plugin from Mika Epstein 
+	(http://halfelf.org/plugins/ban-hammer/).
 
 	Ban Hammer Blue is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
