@@ -107,6 +107,11 @@ class BanHammerBlue {
 			add_filter( 'bp_core_validate_user_signup', array( &$this, 'buddypress_signup' ) );
 		}
 
+		if ( class_exists( 'woocommerce' ) ) {
+			add_filter( 'woocommerce_register_post', array( &$this, 'woocommerce_signup' ), 10, 3 );
+			add_action( 'woocommerce_checkout_process', array( &$this, 'woocommerce_checkout' ), 1 );
+		}
+
 		// The magic sauce
 		add_action( 'register_post', array( &$this, 'banhammer_blue_drop' ), 1, 3 );
 	}
@@ -147,6 +152,34 @@ class BanHammerBlue {
 			$result['errors']->add( 'user_email', $options['message'] );
 		}
 		return $result;
+	}
+
+	/**
+	 * WooCommerce Signup Filter
+	 *
+	 * @since 1.0
+	 * @access public
+	 */
+	public function woocommerce_signup( $validation_errors, $username, $email ) {
+		$options = $this->get_options();
+		if ( $this->banhammer_blue_drop( $username, $user_email, $validation_errors ) ) {
+			$validation_errors->add( 'registration-error-bad-email', $options['message'] );
+		}
+		return $result;
+	}
+
+	/**
+	 * WooCommerce Checkout Action
+	 *
+	 * @since 1.0
+	 * @access public
+	 */
+	public function woocommerce_checkout() {
+		$options = $this->get_options();
+
+		if( isset($_POST['billing_email']) && $this->banhammer_blue_drop( $_POST['billing_email'], $_POST['billing_email'] ) ) {
+			wc_add_notice($options['message'], 'error');
+		}
 	}
 
 	/**
@@ -235,6 +268,7 @@ class BanHammerBlue {
 
 		// The Fields
 		add_settings_field( 'message', __( 'Blocked Message', 'ban-hammer-blue' ), array( &$this, 'message_callback' ), 'ban-hammer-blue-settings', 'banhammer-blue-settings' );
+		add_settings_field( 'burner_list', __( 'Use Burner List?', 'ban-hammer-blue' ), array( &$this, 'burner_list_callback' ), 'ban-hammer-blue-settings', 'banhammer-blue-settings' );
 		add_settings_field( 'redirect', __( 'Redirect Blocked Users?', 'ban-hammer-blue' ), array( &$this, 'redirect_callback' ), 'ban-hammer-blue-settings', 'banhammer-blue-settings' );
 		add_settings_field( 'bannedlist', __( 'The Blocked List', 'ban-hammer-blue' ), array( &$this, 'bannedlist_callback' ), 'ban-hammer-blue-settings', 'banhammer-blue-settings' );
 	}
@@ -296,7 +330,7 @@ class BanHammerBlue {
 			<?php
 		}
 	}
-	
+
 	/**
 	 * Burner List Callback
 	 *
@@ -305,9 +339,13 @@ class BanHammerBlue {
 	public function burner_list_callback() {
 		$options = $this->get_options();
 		?>
-		<p><?php esc_html_e( 'If you\'d to utilize the burner email list from wesbos, please check the box below.', 'ban-hammer-blue' ); ?></p>
 		<p><input type="checkbox" id="banhammer_blue_options[burner_list]" name="banhammer_blue_options[burner_list]" value="yes" <?php checked( $options['burner_list'], 'yes', true ); ?> <?php checked( $options['burner_list'], '1', true ); ?> >
 		<label for="banhammer_blue_options[burner_list]"><?php esc_html_e( 'Utilize the wesbos burner email list.', 'ban-hammer-blue' ); ?></label></p>
+		<?php
+			?>
+			<p <?php if( isset( $options['burner_list'] ) || 'no' !== $options['burner_list'] || ! empty( $options['burner_list'] ) ) echo 'class="rummel-hidden"'; ?> ><textarea name="banhammer_blue_options[verifier_token]" id="banhammer_blue_options[verifier_token]" cols="110" rows="1"><?php echo esc_textarea( $options['verifier_token'] ); ?></textarea>
+			<br /><span class="description"><?php esc_html_e( 'Set Verifier API Key.', 'ban-hammer-blue' ); ?></span></p>
+			<?php
 	}
 
 	/**
@@ -361,7 +399,9 @@ class BanHammerBlue {
 		$output['message'] = ( $input['message'] !== $options['message'] ) ? wp_kses_post( $input['message'] ) : $options['message'];
 
 		// Redirect
+		$output['burner_list']     = ( ! isset( $input['burner_list'] ) || is_null( $input['burner_list'] ) || '0' === $input['burner_list'] ) ? 'no' : 'yes';
 		$output['redirect']     = ( ! isset( $input['redirect'] ) || is_null( $input['redirect'] ) || '0' === $input['redirect'] ) ? 'no' : 'yes';
+		$output['verifier_token'] = ( isset( $input['verifier_token'] ) && $input['verifier_token'] !== $options['verifier_token'] ) ? sanitize_text_field( $input['verifier_token'] ) : $options['verifier_token'];
 		$output['redirect_url'] = ( isset( $input['redirect_url'] ) && $input['redirect_url'] !== $options['redirect_url'] ) ? sanitize_url( $input['redirect_url'] ) : $options['redirect_url'];
 
 		// Banned List (not saved in the Ban Hammer Blue options)
@@ -378,6 +418,12 @@ class BanHammerBlue {
 			update_option( 'disallowed_keys', $new_bannedlist );
 		}
 
+		if( $output['burner_list'] == yes && ! empty($output['verifier_token']) ) {
+			$token = $output['verifier_token'];
+
+
+		}
+
 		return $output;
 	}
 
@@ -389,7 +435,7 @@ class BanHammerBlue {
 	 * @since 1.0
 	 * @access public
 	 */
-	public function banhammer_blue_drop( $user_login, $user_email, $errors ) {
+	public function banhammer_blue_drop( $user_login, $user_email, $errors = null ) {
 		$options           = $this->get_options();
 		$bannedlist_string = $this->get_keylist();
 		$bannedlist_array  = explode( "\n", $bannedlist_string );
@@ -400,13 +446,26 @@ class BanHammerBlue {
 			$bannedlist_current = trim( $bannedlist_array[ $i ] );
 			if ( stripos( $user_email, $bannedlist_current ) !== false ) {
 
-				$errors->add( 'invalid_email', $options['message'] );
+				if( $errors ) $errors->add( 'invalid_email', $options['message'] );
 				if ( 'yes' === $options['redirect'] ) {
 					wp_safe_redirect( $options['redirect_url'] );
 				} else {
 					return true;
 				}
 			}
+		}
+
+		if( $options['burner_list'] == 'yes' && isset( $options['verifier_token'] ) && ! empty( $options['verifier_token'] ) ) {
+			$request = wp_remote_get( 'https://verifier.meetchopra.com/verify/' . $user_email . '?token=' . $options['verifier_token'] );
+
+			if( is_wp_error( $request ) ) {
+				return; // Bail early
+			}
+
+			$body = wp_remote_retrieve_body( $request );
+			$data = json_decode( $body );
+
+			if( $data->status == false ) return true;
 		}
 	}
 
